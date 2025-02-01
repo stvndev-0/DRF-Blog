@@ -19,7 +19,6 @@ DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 DJANGO_APPS = [
@@ -33,6 +32,7 @@ DJANGO_APPS = [
 
 PROJECT_APPS = [
     'apps.blog',
+    'apps.authentication',
 ]
 
 THIRD_PARTY_APPS = [
@@ -71,6 +71,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
+HOST = env('HOST') + env('PUERTO')
+
+# Email
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = env('EMAIL_HOST')
+EMAIL_PORT = env('EMAIL_PORT')
+EMAIL_USE_TLS = env('EMAIL_USE_TLS')
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+
+# Redis
+REDIS_HOST = env('REDIS_HOST')
+REDIS_PORT = env('REDIS_PORT')
+REDIS_DB = env('REDIS_DB')
+
+# Celery
+CELERY_BROKER_URL = env('BROKER_URL')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -81,6 +101,13 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# Custom user model
+AUTH_USER_MODEL = 'authentication.UserAccount'
+AUTHENTICATION_BACKENDS = [
+    'apps.authentication.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend'
+]
 
 
 # Password validation
@@ -106,7 +133,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Santiago'
 USE_I18N = True
 USE_TZ = True
 
