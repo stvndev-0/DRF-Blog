@@ -12,7 +12,7 @@ app.autodiscover_tasks()
 
 app.conf.beat_schedule = {
     'eliminar-usuarios-no-verificados': {
-        'task': 'apps.authentication.tasks.account_not_verify',
-        'schedule': 60.0,  # Cada 10 minutos
+        'task': 'apps.authentication.tasks.unverified_account',
+        'schedule': 600.0,  # Cada 10 minutos
     },
 }
