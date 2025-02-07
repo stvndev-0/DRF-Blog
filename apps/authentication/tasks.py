@@ -6,7 +6,6 @@ from django.core.mail import send_mail
 from django.utils.timezone import now
 from datetime import timedelta
 
-
 User = get_user_model()
 
 @shared_task
@@ -49,6 +48,6 @@ def verify_account(uidb64, token, email):
 
 @shared_task
 def unverified_account():
-    time_limit = now() - timedelta(minutes=1)
+    time_limit = now() - timedelta(minutes=10)
     del_user = User.objects.filter(verified=False, date_joined__lte=time_limit)
     del_user.delete()
