@@ -1,16 +1,15 @@
-from rest_framework import status
+from rest_framework import status, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import (
     SetNewPasswordSerializer,
-    SignUpSerializer,
-    LoginSerializer
+    SignUpSerializer
 )
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth import get_user_model
 from .utils import generate_token
-from .tasks import reset_password, account_verify
+from .tasks import reset_password, verify_account
 
 User = get_user_model()
 
@@ -92,7 +91,7 @@ class SignUpView(APIView):
             token = generate_token.make_token(user)
 
             # tasks
-            account_verify.delay(uidb64, token, email=user.email)
+            verify_account.delay(uidb64, token, email=user.email)
 
             return Response({
                 'detail': 'Verify your email address.',
@@ -102,16 +101,4 @@ class SignUpView(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
-
-class LoginView(APIView):
-    def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        if serializer.is_valid():
-            return Response({
-                'detail': "You're logged in."
-                }, status=status.HTTP_200_OK
-            )
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    
