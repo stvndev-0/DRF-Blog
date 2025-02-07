@@ -56,20 +56,3 @@ class SignUpSerializer(serializers.ModelSerializer):
         )
         
         return user
-
-class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
-
-    def validate(self, data):
-        email = data.get('email')
-        password = data.get('password')
-        try:
-            user = User.objects.get(email=email, verified=True)
-        except User.DoesNotExist:
-            raise serializers.ValidationError({'detail':'Incorrect username or password.'})
-        
-        if not check_password(password, user.password):
-            raise serializers.ValidationError({'detail': 'Incorrect username or password.'})
-        
-        return data
