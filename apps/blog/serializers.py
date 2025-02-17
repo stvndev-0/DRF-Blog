@@ -29,3 +29,31 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = '__all__'
         read_only_fields = ('user',)
+
+class PostDetailSerializer(serializers.ModelSerializer):
+    comments = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Post
+        fields = ['title', 'slug','description', 'content', 'updated_at', 'user', 'comments']
+
+    def get_comments(self, obj):
+        """
+        Filtrar solo los comentarios principales
+        """
+        comments = obj.comments.filter(parent__isnull=True)
+        return CommentSerializer(comments, many=True).data
+
+class ReplySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ['id', 'text', 'user', 'updated_at']
+        read_only_fields = ('replies',)
+
+class CommentSerializer(serializers.ModelSerializer):
+    replies = ReplySerializer(many=True, required=False)
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'text', 'user', 'updated_at', 'replies']
+        read_only_fields = ('user', 'post')
