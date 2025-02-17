@@ -1,7 +1,10 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import generics
+from rest_framework import generics, permissions
+from core.permissions import IsOwnerOrReadOnly
 from .models import Category, Post
-from .serializers import CategorySerializer, PostListSerializer
+from .serializers import (
+    CategorySerializer, PostListSerializer,
+    PostSerializer)
 
 # Category
 class CategoryListView(generics.ListAPIView):
@@ -21,3 +24,14 @@ class PostByCategoryView(generics.ListAPIView):
         slug = self.kwargs.get('slug', None)
         category = get_object_or_404(Category, slug=slug)
         return Post.objects.filter(category=category, status='Public')
+    
+# Posts
+class PostCreateView(generics.CreateAPIView):
+    """
+    Crea un post.
+    """
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
