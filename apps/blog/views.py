@@ -1,10 +1,12 @@
+from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions
 from core.permissions import IsOwnerOrReadOnly
-from .models import Category, Post
+from .models import Category, Post, Comment
 from .serializers import (
     CategorySerializer, PostListSerializer,
-    PostSerializer)
+    PostSerializer, PostDetailSerializer,
+    CommentSerializer)
 
 # Category
 class CategoryListView(generics.ListAPIView):
@@ -24,7 +26,7 @@ class PostByCategoryView(generics.ListAPIView):
         slug = self.kwargs.get('slug', None)
         category = get_object_or_404(Category, slug=slug)
         return Post.objects.filter(category=category, status='Public')
-    
+
 # Posts
 class PostCreateView(generics.CreateAPIView):
     """
@@ -35,3 +37,40 @@ class PostCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+class PostDetailUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Actualiza o elimina un post mediante su slug.
+    """
+    queryset = Post.objects.all()
+    serializer_class = PostDetailSerializer
+    permission_classes = [IsOwnerOrReadOnly]
+    lookup_field = 'slug'
+
+class CommentCreateView(generics.CreateAPIView):
+    """
+    Crea un comentario mediante el slug del post.
+    Crea una respuesta mediante el comment_id del comentario padre.
+    """
+    serializer_class = CommentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        post = get_object_or_404(Post, slug=self.kwargs.get('slug'))
+        comment_id = self.request.data.get('comment_id', None)
+        parent = None
+
+        if comment_id:
+            parent = get_object_or_404(Comment, id=comment_id)
+            if parent.parent:
+                raise ValidationError({'detail': 'Nested replies are not allowed'})
+            
+        serializer.save(user=self.request.user, post=post, parent=parent)
+
+class CommentUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Actualiza o elimina un comment mediante su pk.
+    """
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [IsOwnerOrReadOnly]
