@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from .models import Category, Post, Comment
+from .models import (
+    Category, Post, Comment,
+    PostLikes)
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -7,6 +9,9 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class PostListSerializer(serializers.ModelSerializer):
+    likes = serializers.SerializerMethodField()
+    comments = serializers.SerializerMethodField()
+
     class Meta:
         model = Post
         fields = [
@@ -15,7 +20,15 @@ class PostListSerializer(serializers.ModelSerializer):
             'slug',
             'updated_at',
             'user',
+            'likes',
+            'comments'
         ]
+
+    def get_likes(self, obj):
+        return obj.likes.filter().count()
+
+    def get_comments(self, obj):
+        return obj.comments.filter().count()
 
 class PostSerializer(serializers.ModelSerializer):
     title = serializers.CharField(max_length=155, required=True)
@@ -23,7 +36,8 @@ class PostSerializer(serializers.ModelSerializer):
     content = serializers.CharField(required=True)
     category = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(),
-        required=True)
+        required=True
+    )
     
     class Meta:
         model = Post
@@ -35,7 +49,15 @@ class PostDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['title', 'slug','description', 'content', 'updated_at', 'user', 'comments']
+        fields = [
+            'title',
+            'slug',
+            'description',
+            'content',
+            'updated_at',
+            'user',
+            'comments'
+        ]
 
     def get_comments(self, obj):
         """
@@ -56,4 +78,10 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ['id', 'text', 'user', 'updated_at', 'replies']
+        read_only_fields = ('user', 'post')
+
+class PostLikesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostLikes
+        fields = '__all__'
         read_only_fields = ('user', 'post')
