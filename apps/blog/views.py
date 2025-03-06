@@ -2,11 +2,12 @@ from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions
 from core.permissions import IsOwnerOrReadOnly
-from .models import Category, Post, Comment
+from .models import Category, Post, Comment, PostLikes
 from .serializers import (
     CategorySerializer, PostListSerializer,
     PostSerializer, PostDetailSerializer,
-    CommentSerializer)
+    CommentSerializer,
+    PostLikesSerializer)
 
 # Category
 class CategoryListView(generics.ListAPIView):
@@ -47,6 +48,7 @@ class PostDetailUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsOwnerOrReadOnly]
     lookup_field = 'slug'
 
+# Comments
 class CommentCreateView(generics.CreateAPIView):
     """
     Crea un comentario mediante el slug del post.
@@ -74,3 +76,22 @@ class CommentUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = [IsOwnerOrReadOnly]
+
+# Likes
+class PostLikesCreateView(generics.CreateAPIView):
+    serializer_class = PostLikesSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        slug = self.kwargs.get('slug')
+        post = get_object_or_404(Post, slug=slug)
+        user = self.request.user
+
+        if PostLikes.objects.filter(user=user, post=post).exists():
+            raise ValidationError({'detail': 'El usuario ya dio like a este post'})
+        
+        serializer.save(user=user, post=post)
+    
+class PostLikesDestroyView(generics.DestroyAPIView):
+    queryset = PostLikes.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
