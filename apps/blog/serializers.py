@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import (
     Category, Post, Comment,
     PostLikes)
+from django.contrib.auth.models import User
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,17 +12,27 @@ class CategorySerializer(serializers.ModelSerializer):
 class PostListSerializer(serializers.ModelSerializer):
     likes = serializers.SerializerMethodField()
     comments = serializers.SerializerMethodField()
+    user = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username'
+    )
+    category = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='name'
+    )
 
     class Meta:
         model = Post
         fields = [
             'title',
+            'cover',
             'description',
             'slug',
-            'updated_at',
+            'created_at',
             'user',
             'likes',
-            'comments'
+            'comments',
+            'category'
         ]
 
     def get_likes(self, obj):
@@ -45,6 +56,10 @@ class PostSerializer(serializers.ModelSerializer):
         read_only_fields = ('user',)
 
 class PostDetailSerializer(serializers.ModelSerializer):
+    user = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username'
+    )
     comments = serializers.SerializerMethodField()
 
     class Meta:
@@ -52,11 +67,12 @@ class PostDetailSerializer(serializers.ModelSerializer):
         fields = [
             'title',
             'slug',
+            'cover',
             'description',
             'content',
             'updated_at',
             'user',
-            'comments'
+            'comments',
         ]
 
     def get_comments(self, obj):
@@ -67,12 +83,21 @@ class PostDetailSerializer(serializers.ModelSerializer):
         return CommentSerializer(comments, many=True).data
 
 class ReplySerializer(serializers.ModelSerializer):
+    user = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username'
+    )
+    
     class Meta:
         model = Comment
         fields = ['id', 'text', 'user', 'updated_at']
         read_only_fields = ('replies',)
 
 class CommentSerializer(serializers.ModelSerializer):
+    user = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username'
+    )
     replies = ReplySerializer(many=True, required=False)
 
     class Meta:
