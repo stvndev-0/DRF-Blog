@@ -27,6 +27,7 @@ class Post(models.Model):
     
     title = models.CharField(max_length=155)
     slug = models.CharField(max_length=155, blank=True, null=True, unique=True)
+    cover = models.ImageField(upload_to='covers/', null=True, default='covers/default.png')
     description = models.CharField(max_length=255, blank=True, null=True)
     content = models.TextField()
     status = models.CharField(max_length=10, choices=StatusChoices.choices, default=StatusChoices.PRIVATE)
